@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  gateway:
+    build: ./backend-gateway
+    ports:
+      - "4000:4000"
+    depends_on:
+      - mongo
+      - redis
+      - data-service
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/ocean_data
+      - REDIS_URL=redis://redis:6379
+      - PYTHON_SERVICE_URL=http://data-service:8000
+      - PORT=4000
+    command: npm start
+
+  data-service:
+    build: ./data-service
+    volumes:
+      - ./cleaned-data:/app/cleaned-data
+    environment:
+      - NETCDF_DATA_PATH=/app/cleaned-data
+      - CLEANED_DATA_PATH=/app/cleaned-data
+    expose:
+      - "8000"
+
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=ocean_data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+volumes:
+  mongo-data:
+  redis-data:
